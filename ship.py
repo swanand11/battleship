@@ -15,10 +15,15 @@ class Ship:
             return True
         return False
     def check_hits(self,attack_coordinate):
+        if not self.coordinates:
+            print(f"Error: Coordinates for {self.ship_type} are not set")
+            return False
         if attack_coordinate in self.coordinates:
             self.register_hits()
             return True
         return False
+    def print_coordinates(self):
+        print(self.coordinates)
 carrier = Ship("Carrier", 5)
 battleship = Ship("Battleship", 4)
 destroyer = Ship("Destroyer", 3)

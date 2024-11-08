@@ -1,130 +1,145 @@
 import numpy as np
-from ship import ships
 import random
+from ship import Ship, create_ships
+
 class Board:
     def __init__(self):
-        self.play_arena1 = np.zeros((10, 10))  
-        self.play_arena2 = np.zeros((10, 10))  
+        # Initialize two boards: one for the player, one for the AI
+        self.play_arena1 = np.zeros((10, 10))  # player board
+        self.play_arena2 = np.zeros((10, 10))  # AI board
 
-    def display_board(self):
-        print(self.play_arena2)
+    def display_board(self, is_ai=False):
+        """
+        Display the current state of the board. AI's board hides ship locations.
+        """
+        board = self.play_arena2 if is_ai else self.play_arena1
+        print("  0 1 2 3 4 5 6 7 8 9")
+        for i in range(10):
+            row = f"{i} "
+            for j in range(10):
+                value = board[i][j]
+                if value == 0:
+                    row += ". "
+                elif value == 1:
+                    row += "S " if not is_ai else ". "  # Hide AI ships
+                elif value == 2:
+                    row += "H "  # Hit
+                elif value == -1:
+                    row += "M "  # Miss
+            print(row)
 
-    def validate_coordinates(self, x, y, ship_size, direction):
-        if direction == 1:  
-            if x < 0 or x > 9 or x + ship_size > 10:
+    def validate_coordinates(self, x, y, ship_size, direction, is_ai=False):
+        """
+        Check if the ship can be placed at the given coordinates without overlapping
+        or going out of bounds. Adjusts checks based on direction.
+        """
+        arena = self.play_arena2 if is_ai else self.play_arena1
+        if direction == 1:  # horizontal placement
+            if x + ship_size > 10:
                 return False
-            for col in range(x, x + ship_size):
-                if self.play_arena2[y, col] != 0:  
-                    return False
-        elif direction == 2:  
-            if y < 0 or y > 9 or y + ship_size > 10:
+            return all(arena[y][col] == 0 for col in range(x, x + ship_size))
+        elif direction == 2:  # vertical placement
+            if y + ship_size > 10:
                 return False
-            for row in range(y, y + ship_size):
-                if self.play_arena2[row, x] != 0:  
-                    return False
-        return True
+            return all(arena[row][x] == 0 for row in range(y, y + ship_size))
 
-    def validate_coordinates_ai(self, x, y, ship_size, direction):
-        if direction == 1:  
-            if x < 0 or x > 9 or x + ship_size > 10:
-                return False
-            for col in range(x, x + ship_size):
-                if self.play_arena1[y, col] != 0:  
-                    return False
-        elif direction == 2:  
-            if y < 0 or y > 9 or y + ship_size > 10:
-                return False
-            for row in range(y, y + ship_size):
-                if self.play_arena1[row, x] != 0:  
-                    return False
-        return True
+    def place_on_board(self, x, y, ship, direction, is_ai=False):
+        """
+        Place a ship on the board and update the ship's coordinates. Horizontal or vertical.
+        """
+        arena = self.play_arena2 if is_ai else self.play_arena1
+        ship_coordinates = []
 
-    def place_on_board(self, x, y, ship_size, direction):
-        if direction == 1:  
-            for col in range(x, x + ship_size):
-                self.play_arena2[y, col] = 1  
-        elif direction == 2:  
-            for row in range(y, y + ship_size):
-                self.play_arena2[row, x] = 1 
-
-    def list_of_coordinates(self, x, y, ship, direction):
-        ship.coordinates.clear()  
-        if direction == 1:  
+        if direction == 1:  # horizontal
             for col in range(x, x + ship.size):
-                ship.coordinates.append([y, col])  
-        elif direction == 2:  
+                arena[y][col] = 1
+                ship_coordinates.append([y, col])
+        elif direction == 2:  # vertical
             for row in range(y, y + ship.size):
-                ship.coordinates.append([row, x])  
+                arena[row][x] = 1
+                ship_coordinates.append([row, x])
 
-    def register_hit_board(self, x, y):
-        self.play_arena2[y, x] = 2  
+        # Update the ship's coordinates for tracking
+        ship.update_coordinates(ship_coordinates)
+        ship.placed = True
 
-    def misses_hit_board(self, x, y):
-        self.play_arena2[y, x] = -1  
+    def register_hit_or_miss(self, x, y, is_ai=False, hit=False):
+        """
+        Mark a cell as hit or miss. AI or player board is updated based on 'is_ai' flag.
+        """
+        arena = self.play_arena2 if is_ai else self.play_arena1
+        arena[y][x] = 2 if hit else -1  # 2 for hit, -1 for miss
 
-    def register_hit_board_ai(self, x, y):
-        self.play_arena1[y, x] = 2  
-
-    def misses_hit_board_ai(self, x, y):
-        self.play_arena1[y, x] = -1  
-
-    def setup_ships(self):
+    def setup_ships(self, ships):
+        """
+        Place ships for the player with manual input for each ship. Ensures valid placement.
+        """
         ships_placed_count = 0
         while ships_placed_count < len(ships):
-            print("Select your ship to place (only one of each type can be placed):")
+            print("\nCurrent board state:")
+            self.display_board()
+            
+            print("\nSelect a ship to place (only one of each type):")
             for key, ship in ships.items():
-                if not ship.placed:  
+                if not ship.placed:
                     print(f"Press ({key}) for {ship.ship_type} (size {ship.size})")
-
+            
             ship_type = input("Choose a ship: ")
             if ship_type not in ships:
-                print("Invalid selection. Please try again.")
+                print("Invalid selection. Try again.")
                 continue
+            
             selected_ship = ships[ship_type]
-            
             if selected_ship.placed:
-                print("Ship already placed. Please select a different ship.")
+                print("Ship already placed. Choose another.")
                 continue
-            
-            direction = input("Press (1) for placing horizontally\nPress (2) for placing vertically\n")
+
+            direction = input("Press (1) for horizontal or (2) for vertical placement: ")
             if direction not in ["1", "2"]:
-                print("Invalid direction selection. Please try again.")
+                print("Invalid direction. Try again.")
                 continue
+
             try:
-                x = int(input("Please enter start x coordinate: "))
-                y = int(input("Please enter start y coordinate: "))
+                x = int(input("Enter starting x-coordinate (0-9): "))
+                y = int(input("Enter starting y-coordinate (0-9): "))
             except ValueError:
-                print("Invalid input! Please enter numeric values for coordinates.")
+                print("Invalid input! Enter numbers for coordinates.")
                 continue
+
             if not (0 <= x <= 9) or not (0 <= y <= 9):
-                print("Coordinates out of bounds! Please enter values between 0 and 9.")
+                print("Coordinates out of bounds! Enter values between 0 and 9.")
                 continue
+
             if self.validate_coordinates(x, y, selected_ship.size, int(direction)):
-                self.place_on_board(x, y, selected_ship.size, int(direction))
-                self.list_of_coordinates(x, y, selected_ship, int(direction))
-                selected_ship.placed = True
+                self.place_on_board(x, y, selected_ship, int(direction))
                 ships_placed_count += 1
                 print(f"{selected_ship.ship_type} placed successfully!")
             else:
-                print("Invalid placement! Please try again.")
-    def setup_ships_ai(self):
-        ships_placed_count = 0  
-        while ships_placed_count < len(ships):
-            ship_keys = list(ships.keys())  
-            ship_type = random.choice(ship_keys)  
-            selected_ship = ships[ship_type]
-            if selected_ship.placed:
-                continue
-            direction = random.choice([1, 2])
+                print("Invalid placement! Ships cannot overlap or extend beyond the board.")
+
+    def setup_ships_ai(self, ships):
+        """
+        Automatically place AI ships randomly on the board. Ensures valid placement.
+        """
+        attempts, max_attempts = 0, 1000
+        ships_placed_count = 0
+        
+        while ships_placed_count < len(ships) and attempts < max_attempts:
+            attempts += 1
+            available_ships = [ship for ship in ships.values() if not ship.placed]
+            if not available_ships:
+                break
+
+            ship = random.choice(available_ships)
+            direction = random.randint(1, 2)
             x = random.randint(0, 9)
             y = random.randint(0, 9)
-            if self.validate_coordinates(x, y, selected_ship.size, direction):
-                self.place_on_board(x, y, selected_ship.size, direction)
-                self.list_of_coordinates(x, y, selected_ship, direction)
-                selected_ship.placed = True  
+
+            if self.validate_coordinates(x, y, ship.size, direction, is_ai=True):
+                self.place_on_board(x, y, ship, direction, is_ai=True)
                 ships_placed_count += 1
-                print(f"{selected_ship.ship_type} placed successfully!")
-            else:
-                print(f"Invalid placement for {selected_ship.ship_type}. Retrying...")
-
-
+        
+        if attempts >= max_attempts:
+            print("Error: Could not place all AI ships within limit. Restart the game.")
+            return False
+        return True

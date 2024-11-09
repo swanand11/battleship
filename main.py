@@ -16,8 +16,8 @@ def main():
     while not game_over:
         if player_turn:
             print(f"\n{player.name}'s turn to attack.")
-            ai_player.board.display_board(is_ai=True)
             player.choose_attack_coordinate(ai_player.board, ai_player.ships)
+            ai_player.board.display_board(is_ai=True)
             if ai_player.check_game_status():
                 print("You win!")
                 game_over = True
@@ -25,8 +25,8 @@ def main():
                 player_turn = False
         else:
             print("\nAI's turn to attack.")
-            player.board.display_board()
             ai_player.choose_attack_coordinate(player.board, player.ships)
+            player.board.display_board()
             if player.check_game_status():
                 print("AI wins!")
                 game_over = True

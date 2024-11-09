@@ -74,8 +74,8 @@ class Board:
             if selected_ship.placed:
                 print("Ship already placed. Choose another.")
                 continue
-
-            direction = input("Press (1) for horizontal or (2) for vertical placement: ")
+            print("Enter (1) for horizontal\nEnter (2) for vertical")
+            direction = input()
             if direction not in ["1", "2"]:
                 print("Invalid direction. Try again.")
                 continue
@@ -86,6 +86,7 @@ class Board:
             except ValueError:
                 print("Invalid input! Enter numbers for coordinates.")
                 continue
+        
 
             if not (0 <= x <= 9) or not (0 <= y <= 9):
                 print("Coordinates out of bounds! Enter values between 0 and 9.")
@@ -97,6 +98,7 @@ class Board:
                 print(f"{selected_ship.ship_type} placed successfully!")
             else:
                 print("Invalid placement! Ships cannot overlap or extend beyond the board.")
+        self.display_board()
 
     def setup_ships_ai(self, ships):
         attempts, max_attempts = 0, 1000

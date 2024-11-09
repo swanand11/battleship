@@ -4,14 +4,10 @@ from ship import Ship, create_ships
 
 class Board:
     def __init__(self):
-        # Initialize two boards: one for the player, one for the AI
         self.play_arena1 = np.zeros((10, 10))  # player board
         self.play_arena2 = np.zeros((10, 10))  # AI board
 
     def display_board(self, is_ai=False):
-        """
-        Display the current state of the board. AI's board hides ship locations.
-        """
         board = self.play_arena2 if is_ai else self.play_arena1
         print("  0 1 2 3 4 5 6 7 8 9")
         for i in range(10):
@@ -21,7 +17,7 @@ class Board:
                 if value == 0:
                     row += ". "
                 elif value == 1:
-                    row += "S " if not is_ai else ". "  # Hide AI ships
+                    row += "S " if not is_ai else ". "  
                 elif value == 2:
                     row += "H "  # Hit
                 elif value == -1:
@@ -29,10 +25,6 @@ class Board:
             print(row)
 
     def validate_coordinates(self, x, y, ship_size, direction, is_ai=False):
-        """
-        Check if the ship can be placed at the given coordinates without overlapping
-        or going out of bounds. Adjusts checks based on direction.
-        """
         arena = self.play_arena2 if is_ai else self.play_arena1
         if direction == 1:  # horizontal placement
             if x + ship_size > 10:
@@ -44,9 +36,6 @@ class Board:
             return all(arena[row][x] == 0 for row in range(y, y + ship_size))
 
     def place_on_board(self, x, y, ship, direction, is_ai=False):
-        """
-        Place a ship on the board and update the ship's coordinates. Horizontal or vertical.
-        """
         arena = self.play_arena2 if is_ai else self.play_arena1
         ship_coordinates = []
 
@@ -58,22 +47,14 @@ class Board:
             for row in range(y, y + ship.size):
                 arena[row][x] = 1
                 ship_coordinates.append([row, x])
-
-        # Update the ship's coordinates for tracking
         ship.update_coordinates(ship_coordinates)
         ship.placed = True
 
     def register_hit_or_miss(self, x, y, is_ai=False, hit=False):
-        """
-        Mark a cell as hit or miss. AI or player board is updated based on 'is_ai' flag.
-        """
         arena = self.play_arena2 if is_ai else self.play_arena1
-        arena[y][x] = 2 if hit else -1  # 2 for hit, -1 for miss
+        arena[y][x] = 2 if hit else -1 
 
     def setup_ships(self, ships):
-        """
-        Place ships for the player with manual input for each ship. Ensures valid placement.
-        """
         ships_placed_count = 0
         while ships_placed_count < len(ships):
             print("\nCurrent board state:")
@@ -118,9 +99,6 @@ class Board:
                 print("Invalid placement! Ships cannot overlap or extend beyond the board.")
 
     def setup_ships_ai(self, ships):
-        """
-        Automatically place AI ships randomly on the board. Ensures valid placement.
-        """
         attempts, max_attempts = 0, 1000
         ships_placed_count = 0
         

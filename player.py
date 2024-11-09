@@ -24,7 +24,7 @@ class Player:
         for ship in opponent_ships.values():
             if [y, x] in ship.coordinates:
                 print(f"Hit on {ship.ship_type}!")
-                ship.register_hits()
+                ship.register_hit((x,y))
                 self.hits.append([x, y])
                 opponent_board.register_hit_or_miss(x, y, is_ai=True, hit=True)
                 if ship.ship_sunk():
